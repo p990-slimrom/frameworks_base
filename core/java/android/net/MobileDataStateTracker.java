@@ -398,6 +398,7 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
             networkTypeStr = "edge";
             break;
         case TelephonyManager.NETWORK_TYPE_UMTS:
+        case TelephonyManager.NETWORK_TYPE_TD_SCDMA:
             networkTypeStr = "umts";
             break;
         case TelephonyManager.NETWORK_TYPE_HSDPA:
@@ -564,6 +565,17 @@ public class MobileDataStateTracker extends BaseNetworkStateTracker {
 
         loge("Could not set radio power to " + (turnOn ? "on" : "off"));
         return false;
+    }
+
+
+    public void setInternalDataEnable(boolean enabled) {
+        if (DBG) log("setInternalDataEnable: E enabled=" + enabled);
+        final AsyncChannel channel = mDataConnectionTrackerAc;
+        if (channel != null) {
+            channel.sendMessage(DctConstants.EVENT_SET_INTERNAL_DATA_ENABLE,
+                    enabled ? DctConstants.ENABLED : DctConstants.DISABLED);
+        }
+        if (VDBG) log("setInternalDataEnable: X enabled=" + enabled);
     }
 
     @Override

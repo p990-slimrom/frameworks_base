@@ -2048,6 +2048,26 @@ public final class Settings {
         public static final int VOLUME_OVERLAY_NONE = 3;
 
         /**
+         * Volume panel background color
+         *
+         * @hide
+         */
+        public static final String VOLUME_PANEL_BG_COLOR = "volume_panel_bg_color";
+
+        /**
+         * Whether the proximity sensor will adjust call to speaker
+         * @hide
+         */
+        public static final String PROXIMITY_AUTO_SPEAKER = "proximity_auto_speaker";
+
+        /**
+         * Whether the proximity sensor will adjust call to speaker,
+         * only while in call (not while ringing on outgoing call)
+         * @hide
+         */
+        public static final String PROXIMITY_AUTO_SPEAKER_INCALL_ONLY = "proximity_auto_speaker_incall_only";
+
+        /**
          * Whether the torch will pulse on incoming call
          * @hide
          */
@@ -2125,6 +2145,12 @@ public final class Settings {
          * @hide
          */
         public static final String INCREASING_RING_INTERVAL = "increasing_ring_interval";
+
+        /**
+         * Timeout for volume panel
+         * @hide
+         */
+        public static final String VOLUME_PANEL_TIMEOUT = "volume_panel_timeout";
 
         /**
          * Volume Adjust Sounds Enable, This is the noise made when using volume hard buttons
@@ -2406,6 +2432,11 @@ public final class Settings {
          * boolean (1 or 0).
         */
         public static final String INCALL_GLOWPAD_TRANSPARENCY = "incall_glowpad_transparency";
+
+        /**
+         * Padding above and below dialpad keys in dialer.
+        */
+        public static final String DIALKEY_PADDING = "dialkey_padding";
 
         /**
          * Whether the hearing aid is enabled. The value is
@@ -3337,6 +3368,13 @@ public final class Settings {
                 "status_bar_circle_battery_animationspeed";
 
         /**
+        * Whether to enable ticker animation
+        *
+        * @hide
+        */
+       public static final String TICKER_ENABLED = "ticker_enabled";
+
+        /**
         * Whether to control brightness from status bar
         *
         * @hide
@@ -3502,6 +3540,54 @@ public final class Settings {
                 "notification_shortcuts_color_mode";
 
         /**
+         * Whether heads up notification is shown on the bottom of the screen (default = disabled)
+         *
+         * @hide
+         */
+        public static final String HEADS_UP_GRAVITY_BOTTOM = "heads_up_gravity_bottom";
+
+        /**
+         * Whether heads up notification is expanded by default (default = disabled)
+         *
+         * @hide
+         */
+        public static final String HEADS_UP_EXPANDED = "heads_up_expanded";
+
+        /**
+         * Time where heads up is disabled by user interaction (default = 5 minutes)
+         *
+         * @hide
+         */
+        public static final String HEADS_UP_SNOOZE_TIME = "heads_up_snooze_time";
+
+        /**
+         * Time how long heads up will show till it is automatically hidden.
+         * If time = 0 notifications stays till the user interacts with it.
+         *
+         * @hide
+         */
+        public static final String HEADS_UP_NOTIFCATION_DECAY = "heads_up_notifcation_decay";
+
+        /**
+         * Whether notification updates from background notifications should be shown as heads up.
+         *
+         * @hide
+         */
+        public static final String HEADS_UP_SHOW_UPDATE = "heads_up_show_update";
+
+        /**
+         * Heads Up background color
+         * @hide
+         */
+        public static final String HEADS_UP_BG_COLOR = "heads_up_bg_color";
+
+        /**
+         * Heads Up text color
+         * @hide
+         */
+        public static final String HEADS_UP_TEXT_COLOR = "heads_up_text_color";
+
+        /**
          * Sensitivity of all system shake events
          * @hide
          */
@@ -3531,54 +3617,168 @@ public final class Settings {
 
         /**
          * Whether to enable quiet hours.
+         * 0 = Setting disabled
+         * 1 = Setting enabled but inactive
+         * 2 = Timout ignored and active
+         * 3 = Timeout enabled and active
+         * 4 = Timeout enabled and waiting on charging/wifi connected
          * @hide
          */
         public static final String QUIET_HOURS_ENABLED = "quiet_hours_enabled";
 
         /**
          * Whether quiet hours will enable or disable themselves on volume change
+         * 0 = Setting disabled
+         * 1 = When device is silenced
+         * 2 = When device is set to vibrate or silent
          * @hide
          */
         public static final String QUIET_HOURS_AUTOMATIC = "quiet_hours_automatic";
 
         /**
-         * Sets when quiet hours starts. This is stored in minutes from the start of the day.
+         * Whether to enable quiet hours.
+         * 0 = Setting disabled
+         * 1 = Setting enabled but inactive
+         * 2 = Setting enabled and power connected
+         * @hide
+         */
+        public static final String QUIET_HOURS_REQUIRE_CHARGING = "quiet_hours_require_charging";
+
+        /**
+         * Whether to enable quiet hours.
+         * 0 = Setting disabled
+         * 1 = Setting enabled but inactive
+         * 2 = Setting enabled and wifi connected
+         * @hide
+         */
+        public static final String QUIET_HOURS_REQUIRE_WIFI = "quiet_hours_require_wifi";
+
+        /**
+         * If we do or do not use daily time-range preferences
+         * @hide
+         */
+        public static final String QUIET_HOURS_DAILY = "quiet_hours_daily";
+
+        /**
+         * Holding cartridge for start times if single day preference is enabled
          * @hide
          */
         public static final String QUIET_HOURS_START = "quiet_hours_start";
 
         /**
-         * Sets when quiet hours end. This is stored in minutes from the start of the day.
+         * Holding cartridge for end times if single day preference is enabled
          * @hide
          */
         public static final String QUIET_HOURS_END = "quiet_hours_end";
 
         /**
+         * Sets when quiet hours starts for each day.  Parsed as a split string
+         * by a single controller to update all settings values simultaneiously.
+         * This is stored in minutes from the start of the day.
+         * 0 - 6 are parsed and compared to Sunday (1) through Saturday (7)
+         * 7 - 13 are parsed and compared to Sunday through Saturday
+         * for additional day times (work/weekend-scheduling/etc).
+         * @hide
+         */
+        public static final String[] QUIET_HOURS_START_TIMES = new String[] {
+            "quiet_hours_start_times_sun",
+            "quiet_hours_start_times_mon",
+            "quiet_hours_start_times_tues",
+            "quiet_hours_start_times_wed",
+            "quiet_hours_start_times_thurs",
+            "quiet_hours_start_times_fri",
+            "quiet_hours_start_times_sat",
+            "quiet_hours_start_times_sun_extra",
+            "quiet_hours_start_times_mon_extra",
+            "quiet_hours_start_times_tues_extra",
+            "quiet_hours_start_times_wed_extra",
+            "quiet_hours_start_times_thurs_extra",
+            "quiet_hours_start_times_fri_extra",
+            "quiet_hours_start_times_sat_extra"
+        };
+
+        /**
+         * Sets when quiet hours end for each day.  Parsed as a split string
+         * by a single controller to update all settings values simultaneiously.
+         * This is stored in minutes from the start of the day.
+         * 0 - 6 are parsed and compared to Sunday (1) through Saturday (7)
+         * 7 - 13 are parsed and compared to Sunday through Saturday
+         * for additional day times (work/weekend-scheduling/etc).
+         * @hide
+         */
+        public static final String[] QUIET_HOURS_END_TIMES = new String[] {
+            "quiet_hours_end_times_sun",
+            "quiet_hours_end_times_mon",
+            "quiet_hours_end_times_tues",
+            "quiet_hours_end_times_wed",
+            "quiet_hours_end_times_thurs",
+            "quiet_hours_end_times_fri",
+            "quiet_hours_end_times_sat",
+            "quiet_hours_end_times_sun_extra",
+            "quiet_hours_end_times_mon_extra",
+            "quiet_hours_end_times_tues_extra",
+            "quiet_hours_end_times_wed_extra",
+            "quiet_hours_end_times_thurs_extra",
+            "quiet_hours_end_times_fri_extra",
+            "quiet_hours_end_times_sat_extra"
+        };
+
+        /**
          * Whether to remove the sound from phone ringing during quiet hours.
+         * 0 = Setting disabled
+         * 1 = Setting enabled but inactive
+         * 2 = Setting enabled and active
          * @hide
          */
         public static final String QUIET_HOURS_RINGER = "quiet_hours_ringer";
 
         /**
          * Whether to remove the sound from outgoing notifications during quiet hours.
+         * 0 = Setting disabled
+         * 1 = Setting enabled but inactive
+         * 2 = Setting enabled and active
          * @hide
          */
         public static final String QUIET_HOURS_MUTE = "quiet_hours_mute";
 
         /**
          * Whether to disable haptic feedback during quiet hours.
+         * 0 = Setting disabled
+         * 1 = Setting enabled but inactive
+         * 2 = Setting enabled and active
          * @hide
          */
         public static final String QUIET_HOURS_HAPTIC = "quiet_hours_haptic";
 
         /**
+         * @hide
+         */
+        public static final String PROXIMITY_ON_WAKE = "proximity_on_wake";
+
+
+        /**
+         * Whether to disable system sounds during quiet hours.
+         * 0 = Setting disabled
+         * 1 = Setting enabled but inactive
+         * 2 = Setting enabled and active
+         * @hide
+         */
+        public static final String QUIET_HOURS_SYSTEM = "quiet_hours_system";
+
+        /**
          * Whether to remove the vibration from outgoing notifications during quiet hours.
+         * 0 = Setting disabled
+         * 1 = Setting enabled but inactive
+         * 2 = Setting enabled and active
          * @hide
          */
         public static final String QUIET_HOURS_STILL = "quiet_hours_still";
 
         /**
          * Whether to attempt to dim the LED color during quiet hours.
+         * 0 = Setting disabled
+         * 1 = Setting enabled but inactive
+         * 2 = Setting enabled and active
          * @hide
          */
         public static final String QUIET_HOURS_DIM = "quiet_hours_dim";
@@ -3609,6 +3809,13 @@ public final class Settings {
          * @hide
          */
         public static final String CALL_UI_IN_BACKGROUND = "call_ui_in_background";
+
+        /**
+         * Whether incomming call UI stays in background and shows as heads up notification
+         *
+         * @hide
+         */
+        public static final String CALL_UI_AS_HEADS_UP = "call_ui_as_heads_up";
 
         /**
          * Whether flip action during incomming call should mute or dismiss
@@ -3849,6 +4056,34 @@ public final class Settings {
          * @hide
          */
         public static final String RECENT_PANEL_EXPANDED_MODE = "recent_panel_expanded_mode";
+
+        /**
+         * Recent panel: Show topmost task
+         *
+         * @hide
+         */
+        public static final String RECENT_PANEL_SHOW_TOPMOST = "recent_panel_show_topmost";
+
+        /**
+         * Recent panel background color
+         *
+         * @hide
+         */
+        public static final String RECENT_PANEL_BG_COLOR = "recent_panel_bg_color";
+
+        /**
+         * Recent card background color
+         *
+         * @hide
+         */
+        public static final String RECENT_CARD_BG_COLOR = "recent_card_bg_color";
+
+        /**
+         * Recent card text color
+         *
+         * @hide
+         */
+        public static final String RECENT_CARD_TEXT_COLOR = "recent_card_text_color";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
@@ -6780,6 +7015,12 @@ public final class Settings {
          * @hide
          */
         public static final String SMS_SHORT_CODE_RULE = "sms_short_code_rule";
+
+       /**
+        * Used to select TCP's default initial receiver window size in segments - defaults to a build config value
+        * @hide
+        */
+       public static final String TCP_DEFAULT_INIT_RWND = "tcp_default_init_rwnd";
 
        /**
         * Used to disable Tethering on a device - defaults to true

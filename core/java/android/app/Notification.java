@@ -561,13 +561,13 @@ public class Notification implements Parcelable
     public static final String EXTRA_AS_HEADS_UP = "headsup";
 
     /**
-     * Value for {@link #EXTRA_AS_HEADS_UP}.
+     * Default value for {@link #EXTRA_AS_HEADS_UP}.
      * @hide
      */
     public static final int HEADS_UP_NEVER = 0;
 
     /**
-     * Default value for {@link #EXTRA_AS_HEADS_UP}.
+     * Value for {@link #EXTRA_AS_HEADS_UP}.
      * @hide
      */
     public static final int HEADS_UP_ALLOWED = 1;
@@ -577,6 +577,24 @@ public class Notification implements Parcelable
      * @hide
      */
     public static final int HEADS_UP_REQUESTED = 2;
+
+    /**
+     * Not used.
+     * @hide
+     */
+    public static final String EXTRA_HEADS_UP_EXPANDED = "headsupExpanded";
+
+    /**
+     * Value for {@link #EXTRA_HEADS_UP_EXPANDED}.
+     * @hide
+     */
+    public static final int HEADS_UP_EXPANDED = 0;
+
+    /**
+     * Default value for {@link #EXTRA_HEADS_UP_EXPANDED}.
+     * @hide
+     */
+    public static final int HEADS_UP_NOT_EXPANDED = 1;
 
     /**
      * Structure to encapsulate a named action that can be shown as part of this notification.
@@ -1778,11 +1796,9 @@ public class Notification implements Parcelable
             RemoteViews button = new RemoteViews(mContext.getPackageName(),
                     tombstone ? R.layout.notification_action_tombstone
                               : R.layout.notification_action);
-            button.setTextViewCompoundDrawables(R.id.action0, action.icon, 0, 0, 0);
+            button.setTextViewCompoundDrawablesRelative(R.id.action0, action.icon, 0, 0, 0);
             button.setTextViewText(R.id.action0, action.title);
-            if (!tombstone) {
-                button.setOnClickPendingIntent(R.id.action0, action.actionIntent);
-            }
+            button.setOnClickPendingIntent(R.id.action0, action.actionIntent, tombstone);
             button.setContentDescription(R.id.action0, action.title);
             return button;
         }

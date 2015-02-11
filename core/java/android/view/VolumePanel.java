@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.database.ContentObserver;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.AudioService;
 import android.media.AudioSystem;
@@ -118,6 +119,9 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
     private boolean mVoiceCapable;
     private boolean mVolumeLinkNotification;
     private int mCurrentOverlayStyle = -1;
+    private Drawable defaultBackground;
+    private int mPanelColor;
+    private int mCustomTimeoutDelay = TIMEOUT_DELAY;
 
     // True if we want to play tones on the system stream when the master stream is specified.
     private final boolean mPlayMasterStreamTones;
@@ -236,6 +240,8 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
                     Settings.System.MODE_VOLUME_OVERLAY, VOLUME_OVERLAY_EXPANDABLE,
                     UserHandle.USER_CURRENT);
             changeOverlayStyle(overlayStyle);
+            setColor();
+            setTimeout();
         }
     };
 
@@ -359,6 +365,12 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
         context.getContentResolver().registerContentObserver(
                 Settings.System.getUriFor(Settings.System.MODE_VOLUME_OVERLAY), false,
                 mSettingsObserver, UserHandle.USER_ALL);
+        context.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.VOLUME_PANEL_BG_COLOR), false,
+                mSettingsObserver, UserHandle.USER_ALL);
+        context.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.VOLUME_PANEL_TIMEOUT), false,
+                mSettingsObserver, UserHandle.USER_ALL);
 
         boolean masterVolumeKeySounds = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_useVolumeKeySounds);
@@ -367,6 +379,8 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
 
         mMoreButton.setOnClickListener(this);
         listenToRingerMode();
+        setColor();
+        setTimeout();
     }
 
     private void changeOverlayStyle(int newStyle) {
@@ -411,6 +425,42 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
     public void setLayoutDirection(int layoutDirection) {
         mPanel.setLayoutDirection(layoutDirection);
         updateStates();
+    }
+
+    public void setTheme() {
+        // Force reload the background (to do not get the old cached one)
+        // and update the states.
+        mPanel.setBackgroundResource(R.color.transparent);
+        setColor();
+        updateStates();
+    }
+
+    private void setColor() {
+        ContentResolver resolver = mContext.getContentResolver();
+
+        defaultBackground = mContext.getResources().getDrawable(
+            R.drawable.dialog_full_holo_dark).getCurrent();
+        mPanelColor = Settings.System.getIntForUser(resolver,
+                Settings.System.VOLUME_PANEL_BG_COLOR, -2, UserHandle.USER_CURRENT);
+
+        if (mPanelColor == Integer.MIN_VALUE
+            || mPanelColor == -2) {
+            // Flag to reset volume panel background color
+            mPanel.setBackground(defaultBackground);
+        } else {
+            if (mPanelColor != 0x00ffffff) {
+                mPanel.setBackgroundColor(mPanelColor);
+            } else {
+                mPanel.setBackgroundResource(R.drawable.dialog_full_holo_dark);
+            }
+        }
+    }
+
+    private void setTimeout() {
+        ContentResolver resolver = mContext.getContentResolver();
+        mCustomTimeoutDelay = Settings.System.getIntForUser(resolver,
+            Settings.System.VOLUME_PANEL_TIMEOUT, TIMEOUT_DELAY,
+            UserHandle.USER_CURRENT);
     }
 
     private void listenToRingerMode() {
@@ -856,7 +906,10 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
         // If preference is no sound - just exit here
         if (Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.VOLUME_ADJUST_SOUNDS_ENABLED, 1,
-                UserHandle.USER_CURRENT) == 0) {
+                UserHandle.USER_CURRENT) == 0
+                || Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.QUIET_HOURS_SYSTEM, 1,
+                UserHandle.USER_CURRENT) == 2) {
              return;
         }
 
@@ -985,7 +1038,7 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
 
                 sConfirmSafeVolumeDialog.setOnDismissListener(warning);
                 sConfirmSafeVolumeDialog.getWindow().setType(
-                                                WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
+                                                WindowManager.LayoutParams.TYPE_VOLUME_OVERLAY);
                 sConfirmSafeVolumeDialog.show();
             }
             updateStates();
@@ -1121,7 +1174,16 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
 
     private void resetTimeout() {
         removeMessages(MSG_TIMEOUT);
-        sendMessageDelayed(obtainMessage(MSG_TIMEOUT), TIMEOUT_DELAY);
+        if (isExpanded() && mCurrentOverlayStyle != VOLUME_OVERLAY_EXPANDED) {
+            // If expanded volume panel, use default timeout (3000ms)
+            // This assumes that if user is viewing expanded volume panel,
+            // they will need time to adjust individual sliders. Of course,
+            // if user sets volume panel overlay mode to expanded always,
+            // the custom timeout WILL affect expanded volume panel.
+            sendMessageDelayed(obtainMessage(MSG_TIMEOUT), TIMEOUT_DELAY);
+        } else {
+            sendMessageDelayed(obtainMessage(MSG_TIMEOUT), mCustomTimeoutDelay);
+        }
     }
 
     private void forceTimeout() {

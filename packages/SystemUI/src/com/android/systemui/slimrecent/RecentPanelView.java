@@ -77,6 +77,7 @@ public class RecentPanelView {
     public static final int EXPANDED_STATE_EXPANDED  = 1;
     public static final int EXPANDED_STATE_COLLAPSED = 2;
     public static final int EXPANDED_STATE_BY_SYSTEM = 4;
+    public static final int EXPANDED_STATE_TOPTASK   = 8;
 
     public static final int EXPANDED_MODE_AUTO    = 0;
     private static final int EXPANDED_MODE_ALWAYS = 1;
@@ -118,6 +119,7 @@ public class RecentPanelView {
     private int mMainGravity;
     private float mScaleFactor;
     private int mExpandedMode = EXPANDED_MODE_AUTO;
+    private boolean mShowTopTask;
 
     private PopupMenu mPopup;
 
@@ -619,9 +621,7 @@ public class RecentPanelView {
         mContext.getSystemService(Context.ACTIVITY_SERVICE);
 
         final List<ActivityManager.RecentTaskInfo> recentTasks =
-                am.getRecentTasksForUser(MAX_TASKS, ActivityManager.RECENT_IGNORE_UNAVAILABLE
-                        | ActivityManager.RECENT_WITH_EXCLUDED
-                        | ActivityManager.RECENT_DO_NOT_COUNT_EXCLUDED,
+                am.getRecentTasksForUser(MAX_TASKS, ActivityManager.RECENT_IGNORE_UNAVAILABLE,
                         UserHandle.CURRENT.getIdentifier());
         final int numTasks = recentTasks.size();
         ActivityInfo homeInfo = new Intent(Intent.ACTION_MAIN)
@@ -630,7 +630,6 @@ public class RecentPanelView {
         int firstItems = 0;
         final int firstExpandedItems =
                 mContext.getResources().getInteger(R.integer.expanded_items_default);
-        boolean loadOneExcluded = true;
         // Get current task list. We do not need to do it in background. We only load MAX_TASKS.
         for (int i = 0, index = 0; i < numTasks && (index < MAX_TASKS); ++i) {
             if (mCancelledByUser) {
@@ -647,17 +646,8 @@ public class RecentPanelView {
 
             // Never load the current home activity.
             if (isCurrentHomeActivity(intent.getComponent(), homeInfo)) {
-                loadOneExcluded = false;
                 continue;
             }
-
-            // Don't load excluded activities.
-            if (!loadOneExcluded && (recentInfo.baseIntent.getFlags()
-                    & Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS) != 0) {
-                continue;
-            }
-
-            loadOneExcluded = false;
 
             TaskDescription item = createTaskDescription(recentInfo.id,
                     recentInfo.persistentId, recentInfo.baseIntent,
@@ -672,9 +662,20 @@ public class RecentPanelView {
                     }
                 }
 
-                if (i == 0) {
-                    // Skip the first task for our list but save it for later use.
-                    mFirstTask = item;
+                if (i == 0 ) {
+                    if (mShowTopTask) {
+                        // User want to see actual running task. Set it here
+                        int oldState = getExpandedState(item);
+                        if ((oldState & EXPANDED_STATE_TOPTASK) == 0) {
+                            oldState |= EXPANDED_STATE_TOPTASK;
+                        }
+                        item.setExpandedState(oldState);
+                        mTasks.add(item);
+                        mFirstTask = null;
+                    } else {
+                        // Skip the first task for our list but save it for later use.
+                        mFirstTask = item;
+                    }
                 } else {
                     // FirstExpandedItems value forces to show always the app screenshot
                     // if the old state is not known and the user has set expanded mode to auto.
@@ -684,6 +685,9 @@ public class RecentPanelView {
                     int oldState = getExpandedState(item);
                     if ((oldState & EXPANDED_STATE_BY_SYSTEM) != 0) {
                         oldState &= ~EXPANDED_STATE_BY_SYSTEM;
+                    }
+                    if ((oldState & EXPANDED_STATE_TOPTASK) != 0) {
+                        oldState &= ~EXPANDED_STATE_TOPTASK;
                     }
                     if (DEBUG) Log.v(TAG, "old expanded state = " + oldState);
                     if (firstItems < firstExpandedItems) {
@@ -831,6 +835,10 @@ public class RecentPanelView {
 
     protected void setExpandedMode(int mode) {
         mExpandedMode = mode;
+    }
+
+    protected void setShowTopTask(boolean enabled) {
+        mShowTopTask = enabled;
     }
 
     protected boolean hasFavorite() {

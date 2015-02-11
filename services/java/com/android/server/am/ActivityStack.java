@@ -982,6 +982,7 @@ final class ActivityStack {
         } else {
             next.cpuTimeAtResume = 0; // Couldn't get the cpu time of process
         }
+        updateHeadsUpState(next);
         updatePrivacyGuardNotificationLocked(next);
     }
 
@@ -1063,6 +1064,9 @@ final class ActivityStack {
             final TaskRecord task = mTaskHistory.get(taskNdx);
             final ArrayList<ActivityRecord> activities = task.mActivities;
             for (int activityNdx = activities.size() - 1; activityNdx >= 0; --activityNdx) {
+                if(activityNdx >= activities.size()) {
+                    continue;
+                }
                 final ActivityRecord r = activities.get(activityNdx);
                 if (r.finishing) {
                     continue;
@@ -1292,17 +1296,7 @@ final class ActivityStack {
         if (prevTask != null && prevTask.mOnTopOfHome && prev.finishing && prev.frontOfTask) {
             if (DEBUG_STACK)  mStackSupervisor.validateTopActivitiesLocked();
             if (prevTask == nextTask) {
-                ArrayList<ActivityRecord> activities = prevTask.mActivities;
-                final int numActivities = activities.size();
-                for (int activityNdx = 0; activityNdx < numActivities; ++activityNdx) {
-                    final ActivityRecord r = activities.get(activityNdx);
-                    // r is usually the same as next, but what if two activities were launched
-                    // before prev finished?
-                    if (!r.finishing) {
-                        r.frontOfTask = true;
-                        break;
-                    }
-                }
+                prevTask.setFrontOfTask();
             } else if (prevTask != topTask()) {
                 // This task is going away but it was supposed to return to the home task.
                 // Now the task above it has to return to the home task instead.
@@ -1693,6 +1687,33 @@ final class ActivityStack {
         mTaskHistory.add(stackNdx, task);
     }
 
+    private final void updateHeadsUpState(ActivityRecord next) {
+        String headsUpPackageName = mStackSupervisor.mHeadsUpPackageName;
+        if (headsUpPackageName != null && headsUpPackageName.equals(next.packageName)) {
+            return;
+        }
+
+        boolean isHeadsUpCandidate = false;
+        try {
+            isHeadsUpCandidate = AppGlobals.getPackageManager().getHeadsUpSetting(
+                    next.packageName, next.userId);
+        } catch (RemoteException e) {
+            // nothing
+        }
+        if (!isHeadsUpCandidate) {
+            // Next package has no heads up enabled. So we do not need to notify
+            // statusbar service that the package has changed. Why bother with it?
+            mStackSupervisor.mHeadsUpPackageName = null;
+            return;
+        } else {
+            // Next package has heads up enabled. Notify statusbar service,
+            // let it decide if the heads up which is currently shown is
+            // from this package and hide it if this is the case.
+            mStackSupervisor.hideHeadsUpCandidate(next.packageName);
+            mStackSupervisor.mHeadsUpPackageName = next.packageName;
+        }
+    }
+
     private final void updatePrivacyGuardNotificationLocked(ActivityRecord next) {
         if (android.provider.Settings.Secure.getIntForUser(mContext.getContentResolver(),
             android.provider.Settings.Secure.PRIVACY_GUARD_NOTIFICATION,
@@ -1781,9 +1802,9 @@ final class ActivityStack {
         if (DEBUG_ADD_REMOVE) Slog.i(TAG, "Adding activity " + r + " to stack to task " + task,
                 new RuntimeException("here").fillInStackTrace());
         task.addActivityToTop(r);
+        task.setFrontOfTask();
 
         r.putInHistory();
-        r.frontOfTask = newTask;
         if (!isHomeStack() || numActivities() > 0) {
             // We want to show the starting preview window if we are
             // switching to a new task, or the next activity's process is
@@ -2444,15 +2465,12 @@ final class ActivityStack {
         final ArrayList<ActivityRecord> activities = r.task.mActivities;
         final int index = activities.indexOf(r);
         if (index < (activities.size() - 1)) {
-            ActivityRecord next = activities.get(index+1);
-            if (r.frontOfTask) {
-                // The next activity is now the front of the task.
-                next.frontOfTask = true;
-            }
+            r.task.setFrontOfTask();
             if ((r.intent.getFlags()&Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET) != 0) {
                 // If the caller asked that this activity (and all above it)
                 // be cleared when the task is reset, don't lose that information,
                 // but propagate it up to the next activity.
+                ActivityRecord next = activities.get(index+1);
                 next.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
             }
         }

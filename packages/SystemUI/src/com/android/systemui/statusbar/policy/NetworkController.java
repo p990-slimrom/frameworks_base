@@ -62,6 +62,9 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
 
     private static final int FLIGHT_MODE_ICON = R.drawable.stat_sys_signal_flightmode;
 
+    private static final String UPDATE_QUIET_HOURS_MODES =
+            "com.android.settings.slim.service.UPDATE_QUIET_HOURS_MODES";
+
     // telephony
     boolean mHspaDataDistinguishable;
     final TelephonyManager mPhone;
@@ -604,6 +607,7 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
                         // fall through
                     }
                 case TelephonyManager.NETWORK_TYPE_UMTS:
+                case TelephonyManager.NETWORK_TYPE_TD_SCDMA:
                     mDataIconList = TelephonyIcons.DATA_3G[mInetCondition];
                     mDataTypeIconId = R.drawable.stat_sys_data_fully_connected_3g;
                     mQSDataTypeIconId = TelephonyIcons.QS_DATA_3G[mInetCondition];
@@ -851,6 +855,7 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
             mWifiConnected = networkInfo != null && networkInfo.isConnected();
             // If we just connected, grab the inintial signal strength and ssid
             if (mWifiConnected && !wasConnected) {
+                updateQuietHoursState();
                 // try getting it out of the intent first
                 WifiInfo info = (WifiInfo) intent.getParcelableExtra(WifiManager.EXTRA_WIFI_INFO);
                 if (info == null) {
@@ -862,6 +867,7 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
                     mWifiSsid = null;
                 }
             } else if (!mWifiConnected) {
+                updateQuietHoursState();
                 mWifiSsid = null;
             }
         } else if (action.equals(WifiManager.RSSI_CHANGED_ACTION)) {
@@ -871,6 +877,28 @@ public class NetworkController extends BroadcastReceiver implements DemoMode {
         }
 
         updateWifiIcons();
+    }
+
+    private void updateQuietHoursState() {
+        final int quietHoursWiFi = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.QUIET_HOURS_REQUIRE_WIFI, 0);
+        if (quietHoursWiFi == 1 && mWifiConnected) {
+            // We just updated and need to inform quiet hours that we're connected
+            Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.QUIET_HOURS_REQUIRE_WIFI, 2);
+            sendUpdateIntent();
+        } else if (quietHoursWiFi == 2 && !mWifiConnected) {
+            // We just updated and need to inform quiet hours that we're not connected
+            Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.QUIET_HOURS_REQUIRE_WIFI, 1);
+            sendUpdateIntent();
+        }
+    }
+
+    private void sendUpdateIntent() {
+        Intent intent = new Intent();
+        intent.setAction(UPDATE_QUIET_HOURS_MODES);
+        mContext.sendBroadcast(intent);
     }
 
     private void updateWifiIcons() {

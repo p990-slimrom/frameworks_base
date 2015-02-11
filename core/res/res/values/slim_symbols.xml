@@ -103,12 +103,10 @@
   <!-- UI theme mode -->
   <java-symbol type="integer" name="config_uiThemeMode" />
   <java-symbol type="string" name="theme_auto_switch_mode_error" />
+  <java-symbol type="drawable" name="dialog_full_holo_dark" />
 
   <!-- Statusbar double tap gesture -->
   <java-symbol type="bool" name="config_disableDoubleTapSleepGesture" />
-
-  <!-- Force permanent menu key -->
-  <java-symbol type="bool" name="config_force_permanent_menu_key" />
 
   <!-- Advanced Reboot -->
   <java-symbol type="array" name="shutdown_reboot_options" />
@@ -123,6 +121,10 @@
   <java-symbol type="dimen" name="edge_gesture_perpendicular_distance" />
   <java-symbol type="dimen" name="edge_gesture_trigger_thickness" />
 
+  <!-- Custom device key handler -->
+  <java-symbol type="string" name="config_deviceKeyHandlerLib" />
+  <java-symbol type="string" name="config_deviceKeyHandlerClass" />
+
   <!-- Slim recent app screen-->
   <java-symbol type="integer" name="config_recentDefaultDur" />
   <java-symbol type="integer" name="config_recentExitDur" />
@@ -132,4 +134,23 @@
   <java-symbol type="anim" name="recent_screen_enter_left" />
   <java-symbol type="anim" name="recent_screen_fade_out" />
 
+  <!-- Button and keyboard backlight -->
+  <java-symbol type="bool" name="config_deviceHasVariableButtonBrightness" />
+  <java-symbol type="integer" name="config_buttonBrightnessSettingDefault" />
+  <java-symbol type="integer" name="config_keyboardBrightnessSettingDefault" />
+
+  <!-- Config.xml entries -->
+  <java-symbol type="bool" name="config_samsung_stk" />
+  <java-symbol type="bool" name="config_smsSamsungCdmaAlternateMessageIDEncoding" />
+  <java-symbol type="string" name="config_legacyUmsLunFile" />
+
+  <!-- LTE signal strength calculation -->
+  <java-symbol type="integer" name="config_LTE_antenna_bar_quantity_metric" />
+  <java-symbol type="integer" name="config_LTE_RSRP_threshold_type" />
+
+  <!-- Proximity check on screen on -->
+  <java-symbol type="bool" name="config_proximityCheckOnWake" />
+
+  <!-- Proximity check timeout -->
+  <java-symbol type="integer" name="config_proximityCheckTimeout" />
 </resources>

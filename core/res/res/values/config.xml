@@ -42,6 +42,7 @@
        <item><xliff:g id="id">alarm_clock</xliff:g></item>
        <item><xliff:g id="id">secure</xliff:g></item>
        <item><xliff:g id="id">clock</xliff:g></item>
+       <item><xliff:g id="id">quiet_hours</xliff:g></item>
     </string-array>
 
     <!-- Flag indicating whether the surface flinger has limited
@@ -953,7 +954,7 @@
     <!-- Max space (in MB) allocated to DownloadManager to store the downloaded
          files if they are to be stored in DownloadManager's data dir,
          which typically is /data/data/com.android.providers.downloads/files -->
-    <integer name="config_downloadDataDirSize">100</integer>
+    <integer name="config_downloadDataDirSize">200</integer>
 
     <!-- Max number of downloads allowed to proceed concurrently -->
     <integer name="config_MaxConcurrentDownloadsAllowed">5</integer>
@@ -1342,6 +1343,14 @@
         <item>353</item>
     </string-array>
 
+    <!-- Override the default detection behavior for the framework method
+         android.view.ViewConfiguration#hasPermanentMenuKey().
+         Valid settings are:
+         0 - No change. Use the default autodetection behavior.
+         1 - The device DOES have a permanent menu key; ignore autodetection.
+         2 - The device DOES NOT have a permanent menu key; ignore autodetection. -->
+    <integer name="config_overrideHasPermanentMenuKey">0</integer>
+
     <!-- The list of components which should be automatically disabled. -->
     <string-array name="config_disabledComponents" translatable="false">
     </string-array>
@@ -1354,6 +1363,12 @@
          legacy USB manager should be started. -->
     <string name="config_legacyUmsLunFile">/sys/devices/platform/usb_mass_storage/lun0/file</string>
 
+    <!-- Path to the library that contains a device specific key handler -->
+    <string name="config_deviceKeyHandlerLib" translatable="false"></string>
+
+    <!-- Name of that key handler class -->
+    <string name="config_deviceKeyHandlerClass" translatable="false"></string>
+
     <!-- Boolean to enable Stylus gestures -->
     <bool name="config_stylusGestures">false</bool>
 
@@ -1362,9 +1377,6 @@
 
     <!-- Workaround for devices with broken keyboards -->
     <bool name="config_forceDisableHardwareKeyboard">false</bool>
-
-    <!-- Force permanent menu key -->
-    <bool name="config_force_permanent_menu_key">false</bool>
 
     <!-- Hardware "softkeys" present on the device, stored as a bit field.
          This integer should equal the sum of the corresponding value for each
@@ -1378,4 +1390,23 @@
         config to 7. -->
     <integer name="config_deviceHardwareKeys">0</integer>
 
+    <!-- The second metric to be used for antenna bar display for LTE
+          The metrics to be used for Antenna display is based on RSRP and either one of the
+           0. RSSNR
+           1. RSRQ
+    -->
+    <integer name="config_LTE_antenna_bar_quantity_metric">0</integer>
+
+    <!-- Flag indicating whether strict threshold is used, or lenient threshold is used,
+          when evaluating RSRP for LTE antenna bar display
+           0. Strict threshold
+           1. Lenient threshold
+    -->
+    <integer name="config_LTE_RSRP_threshold_type">0</integer>
+
+    <!-- Default value for proximity check on screen wake
+         NOTE ! - Enable for devices that have a fast response proximity sensor (ideally < 300ms)
+    -->
+    <bool name="config_proximityCheckOnWake">false</bool>
+    <integer name="config_proximityCheckTimeout">250</integer>
 </resources>

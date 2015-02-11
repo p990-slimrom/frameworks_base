@@ -36,6 +36,7 @@ import static com.android.internal.util.slim.QSConstants.TILE_LOCKSCREEN;
 import static com.android.internal.util.slim.QSConstants.TILE_LTE;
 import static com.android.internal.util.slim.QSConstants.TILE_MOBILEDATA;
 import static com.android.internal.util.slim.QSConstants.TILE_MUSIC;
+import static com.android.internal.util.slim.QSConstants.TILE_NETWORKADB;
 import static com.android.internal.util.slim.QSConstants.TILE_NETWORKMODE;
 import static com.android.internal.util.slim.QSConstants.TILE_NFC;
 import static com.android.internal.util.slim.QSConstants.TILE_QUICKRECORD;
@@ -54,6 +55,7 @@ import static com.android.internal.util.slim.QSConstants.TILE_VOLUME;
 import static com.android.internal.util.slim.QSConstants.TILE_WIFI;
 import static com.android.internal.util.slim.QSConstants.TILE_WIFIAP;
 import static com.android.internal.util.slim.QSConstants.TILE_REBOOT;
+import static com.android.internal.util.slim.QSConstants.TILE_REMOTEDISPLAY;
 
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -88,6 +90,7 @@ import com.android.systemui.quicksettings.LteTile;
 import com.android.systemui.quicksettings.MobileNetworkTile;
 import com.android.systemui.quicksettings.MobileNetworkTypeTile;
 import com.android.systemui.quicksettings.MusicTile;
+import com.android.systemui.quicksettings.NetworkAdbTile;
 import com.android.systemui.quicksettings.NfcTile;
 import com.android.systemui.quicksettings.PreferencesTile;
 import com.android.systemui.quicksettings.QuickSettingsTile;
@@ -104,6 +107,7 @@ import com.android.systemui.quicksettings.TorchTile;
 import com.android.systemui.quicksettings.UsbTetherTile;
 import com.android.systemui.quicksettings.UserTile;
 import com.android.systemui.quicksettings.VolumeTile;
+import com.android.systemui.quicksettings.RemoteDisplayTile;
 import com.android.systemui.quicksettings.WiFiTile;
 import com.android.systemui.quicksettings.WifiAPTile;
 import com.android.systemui.quicksettings.RebootTile;
@@ -259,6 +263,11 @@ public class QuickSettingsController {
                 qs = new CustomTile(mContext, this, findCustomKey(tile));
             } else if (tile.contains(TILE_CONTACT)) {
                 qs = new ContactTile(mContext, this, findCustomKey(tile));
+            } else if (tile.equals(TILE_NETWORKADB)) {
+                mTileStatusUris.add(Settings.Global.getUriFor(Settings.Global.ADB_ENABLED));
+                if (DeviceUtils.adbEnabled(resolver)) {
+                    qs = new NetworkAdbTile(mContext, this);
+                }
             }
 
             if (qs != null) {
@@ -295,6 +304,9 @@ public class QuickSettingsController {
             } else if (tile.equals(TILE_USBTETHER)
                     && DeviceUtils.deviceSupportsUsbTether(mContext)) {
                 qs = new UsbTetherTile(mContext, this);
+            } else if (tile.equals(TILE_REMOTEDISPLAY)
+                    && DeviceUtils.deviceSupportsRemoteDisplay(mContext)) {
+                qs = new RemoteDisplayTile(mContext, this);
             }
 
             if (qs != null) {

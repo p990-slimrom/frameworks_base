@@ -227,7 +227,7 @@ static void ToColor_SI8_Alpha(SkColor dst[], const void* src, int width,
     do {
         *dst++ = SkUnPreMultiply::PMColorToColor(colors[*s++]);
     } while (--width != 0);
-    ctable->unlockColors(false);
+    ctable->unlockColors();
 }
 
 static void ToColor_SI8_Raw(SkColor dst[], const void* src, int width,
@@ -240,7 +240,7 @@ static void ToColor_SI8_Raw(SkColor dst[], const void* src, int width,
         *dst++ = SkColorSetARGB(SkGetPackedA32(c), SkGetPackedR32(c),
                                 SkGetPackedG32(c), SkGetPackedB32(c));
     } while (--width != 0);
-    ctable->unlockColors(false);
+    ctable->unlockColors();
 }
 
 static void ToColor_SI8_Opaque(SkColor dst[], const void* src, int width,
@@ -253,7 +253,7 @@ static void ToColor_SI8_Opaque(SkColor dst[], const void* src, int width,
         *dst++ = SkColorSetRGB(SkGetPackedR32(c), SkGetPackedG32(c),
                                SkGetPackedB32(c));
     } while (--width != 0);
-    ctable->unlockColors(false);
+    ctable->unlockColors();
 }
 
 // can return NULL
@@ -442,9 +442,15 @@ static jboolean Bitmap_hasAlpha(JNIEnv* env, jobject, SkBitmap* bitmap) {
     return !bitmap->isOpaque();
 }
 
-static void Bitmap_setHasAlpha(JNIEnv* env, jobject, SkBitmap* bitmap,
-                               jboolean hasAlpha) {
-    bitmap->setIsOpaque(!hasAlpha);
+static void Bitmap_setAlphaAndPremultiplied(JNIEnv* env, jobject, SkBitmap* bitmap,
+                                            jboolean hasAlpha, jboolean isPremul) {
+    if (!hasAlpha) {
+        bitmap->setAlphaType(kOpaque_SkAlphaType);
+    } else if (isPremul) {
+        bitmap->setAlphaType(kPremul_SkAlphaType);
+    } else {
+        bitmap->setAlphaType(kUnpremul_SkAlphaType);
+    }
 }
 
 static jboolean Bitmap_hasMipMap(JNIEnv* env, jobject, SkBitmap* bitmap) {
@@ -543,14 +549,14 @@ static jboolean Bitmap_writeToParcel(JNIEnv* env, jobject,
     p->writeInt32(bitmap->rowBytes());
     p->writeInt32(density);
 
-    if (bitmap->getConfig() == SkBitmap::kIndex8_Config) {
+    if (bitmap->config() == SkBitmap::kIndex8_Config) {
         SkColorTable* ctable = bitmap->getColorTable();
         if (ctable != NULL) {
             int count = ctable->count();
             p->writeInt32(count);
             memcpy(p->writeInplace(count * sizeof(SkPMColor)),
                    ctable->lockColors(), count * sizeof(SkPMColor));
-            ctable->unlockColors(false);
+            ctable->unlockColors();
         } else {
             p->writeInt32(0);   // indicate no ctable
         }
@@ -740,7 +746,19 @@ static bool Bitmap_sameAs(JNIEnv* env, jobject, const SkBitmap* bm0,
     const int h = bm0->height();
     const size_t size = bm0->width() * bm0->bytesPerPixel();
     for (int y = 0; y < h; y++) {
-        if (memcmp(bm0->getAddr(0, y), bm1->getAddr(0, y), size) != 0) {
+        // SkBitmap::getAddr(int, int) may return NULL due to unrecognized config
+        // (ex: kRLE_Index8_Config). This will cause memcmp method to crash. Since bm0
+        // and bm1 both have pixel data() (have passed NULL == getPixels() check),
+        // those 2 bitmaps should be valid (only unrecognized), we return JNI_FALSE
+        // to warn user those 2 unrecognized config bitmaps may be different.
+        void *bm0Addr = bm0->getAddr(0, y);
+        void *bm1Addr = bm1->getAddr(0, y);
+
+        if(bm0Addr == NULL || bm1Addr == NULL) {
+            return false;
+        }
+
+        if (memcmp(bm0Addr, bm1Addr, size) != 0) {
             return false;
         }
     }
@@ -770,7 +788,7 @@ static JNINativeMethod gBitmapMethods[] = {
     {   "nativeRowBytes",           "(I)I", (void*)Bitmap_rowBytes },
     {   "nativeConfig",             "(I)I", (void*)Bitmap_config },
     {   "nativeHasAlpha",           "(I)Z", (void*)Bitmap_hasAlpha },
-    {   "nativeSetHasAlpha",        "(IZ)V", (void*)Bitmap_setHasAlpha },
+    {   "nativeSetAlphaAndPremultiplied", "(IZZ)V", (void*)Bitmap_setAlphaAndPremultiplied},
     {   "nativeHasMipMap",          "(I)Z", (void*)Bitmap_hasMipMap },
     {   "nativeSetHasMipMap",       "(IZ)V", (void*)Bitmap_setHasMipMap },
     {   "nativeCreateFromParcel",
